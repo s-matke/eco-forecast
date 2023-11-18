@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import xml.etree.ElementTree as ET
 import pandas as pd
 from datetime import datetime, timedelta
+import os
 
 def xml_to_gen_data(xml_data) -> dict:
     """
@@ -120,3 +121,8 @@ def perform_get_request(base_url, params):
         return response.text
     else:
         return response.content
+
+def generate_region_subdirectories(regions, output_path):
+    for region, _ in regions.items():
+        if not os.path.exists(f'{output_path}/{region}'):
+            os.mkdir(f'{output_path}/{region}')

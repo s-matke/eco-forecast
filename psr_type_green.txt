@@ -1,0 +1,11 @@
+B01, Biomass
+B09, Geothermal
+B10, Hydro Pumped Storage
+B11, Hydro Run-of-river and poundage
+B12, Hydro Water Reservoir
+B13, Marine
+B15, Other renewable
+B16, Solar
+B17, Waste
+B18, Wind Offshore
+B19, Wind Onshore
