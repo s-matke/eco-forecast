@@ -1,14 +1,46 @@
 import argparse
+import pandas as pd
+import numpy as np
+import datetime
 
 def load_data(file_path):
     # TODO: Load data from CSV file
-
+    df = pd.read_csv(file_path)
     return df
+
+# find outliers statistically using percentiles
+def identify_outliers(data):
+
+    # q1 q3 percentiles
+    Q1 = np.percentile(data, 25)
+    Q3 = np.percentile(data, 75)
+
+    IQR = Q3 - Q1
+
+    # lower and upper bounds for outliers
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+
+    # Identify outliers
+    outliers = (data < lower_bound) | (data > upper_bound)
+
+    return outliers
+
 
 def clean_data(df):
     # TODO: Handle missing values, outliers, etc.
 
-    return df_clean
+    # Checking if there's missing values and replacing them with mean value of preceeding and following samples
+    if df.isna().sum().sum() > 0:
+        df.interpolate(method='linear', limit_direction='both', inplace=True)
+
+    # Imputing outliers with mean value
+    for col in df.columns:
+        outliers = identify_outliers(df[col])
+        df.loc[outliers, col] = df[col].mean()
+
+
+    return df
 
 def preprocess_data(df):
     # TODO: Generate new features, transform existing features, resampling, etc.
