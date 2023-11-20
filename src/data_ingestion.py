@@ -216,10 +216,12 @@ def merge_green_energy_dataframes(dataframes, region_code):
     return df_merged
 
 def save_raw_data(merges, output_path):
+    print("Saving the data into raw_data.csv...")
     raw_data = reduce(lambda left, right: pd.merge(left, right, on=['StartTime'], how='outer'), merges)
-    raw_data.to_csv(f'{output_path}/raw_data.csv')
+    raw_data.to_csv(f'{output_path}/raw_data.csv', index=False)
 
 def load_merge_save_raw_dataframes(start_time, end_time, data_dir_path):
+    print("Loading and merging all the data...")
     merges = []
     df_merged = None
 
