@@ -1,12 +1,29 @@
 import pandas as pd
 import argparse
 
+from sklearn.model_selection import train_test_split
+
 def load_data(file_path):
     # TODO: Load processed data from CSV file
+
+    df = pd.read_csv(file_path)
+    
     return df
 
 def split_data(df):
     # TODO: Split data into training and validation sets (the test set is already provided in data/test_data.csv)
+    df.drop(['StartTime'], axis=1, inplace=True)
+
+    # Save the test.csv file for predicting later
+    test_set = df.tail(int(0.2 * df.shape[0]))
+    test_set.to_csv('data/test.csv', index=False)
+    df.drop(test_set, inplace=True)
+
+    X = df.drop(['label'], axis=1)
+    y = df['label']
+
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True, stratify=y)
+
     return X_train, X_val, y_train, y_val
 
 def train_model(X_train, y_train):

@@ -22,7 +22,6 @@ green_energy_sources = {
     'B13': 'Marine',
     'B15': 'Other renewable',
     'B16': 'Solar',
-    'B17': 'Waste',
     'B18': 'Wind Offshore',
     'B19': 'Wind Onshore'
 }
@@ -125,12 +124,17 @@ def fill_missing_hours(df, start_time, end_time, frequency, df_type):
     merged_df = pd.merge(complete_df, df, on='StartTime', how='left')
 
     # fill missing values with 0
-    merged_df[df_type] = merged_df[df_type].fillna(0)
+    merged_df[df_type] = merged_df[df_type].fillna(np.nan)
     
     return merged_df
 
 def transform_dataframe(start_time, end_time, file_path):
     df = pd.read_csv(file_path)
+
+    if df.loc[df['UnitName'] != 'MAW'].shape[0] > 0:
+        print("UNIT ISN'T MAW!")
+        print(df['UnitName'].unique())
+        raise Exception("ERROR: UNITNAME NOT 'MAW'")
 
     df.drop_duplicates('StartTime', keep='first', inplace=True)
     df.drop(['EndTime', 'AreaID', 'UnitName'], axis=1, inplace=True)
@@ -167,12 +171,12 @@ def transform_dataframe(start_time, end_time, file_path):
             return None
         
         df.drop(['PsrType'], axis=1, inplace=True)
-        df['quantity'] = df['quantity'].replace(0, np.nan)
+        # df['quantity'] = df['quantity'].replace(0, np.nan)
         df.interpolate(method='linear', limit_direction='both', inplace=True)
     else:
         if df.loc[df['Load'] == 0].shape[0] == df.shape[0]:
             return None
-        df['Load'].replace(0, np.nan, inplace=True)
+        # df['Load'].replace(0, np.nan, inplace=True)
         df['Load'].interpolate(method='linear', limit_direction='both', inplace=True)
 
     # Add extra columns for year, month, day, hour
@@ -213,7 +217,6 @@ def merge_green_energy_dataframes(dataframes, region_code):
 
 def save_raw_data(merges, output_path):
     raw_data = reduce(lambda left, right: pd.merge(left, right, on=['StartTime'], how='outer'), merges)
-    print("NANS: ", raw_data.isna().sum().sum())
     raw_data.to_csv(f'{output_path}/raw_data.csv')
 
 def load_merge_save_raw_dataframes(start_time, end_time, data_dir_path):
@@ -272,7 +275,7 @@ def parse_arguments():
     parser.add_argument(
         '--end_time', 
         type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), 
-        default=datetime.datetime(2022, 1, 5), 
+        default=datetime.datetime(2023, 1, 1), 
         help='End time for the data to download, format: YYYY-MM-DD'
     )
     parser.add_argument(
@@ -308,12 +311,12 @@ def main(start_time, end_time, output_path):
     end_time = end_time.strftime('%Y%m%d%H%M')
 
     # Get Load data from ENTSO-E
-    get_load_data_from_entsoe(regions, start_time, end_time, output_path)
+    # get_load_data_from_entsoe(regions, start_time, end_time, output_path)
 
     # Get Generation data from ENTSO-E
-    get_gen_data_from_entsoe(regions, start_time, end_time, output_path)
+    # get_gen_data_from_entsoe(regions, start_time, end_time, output_path)
 
-    # Combine Generation data and Load data into single file
+    # Combine Generation data and Load data into single dataframe and save as .csv
     load_merge_save_raw_dataframes(start_time, end_time, output_path)
 
 if __name__ == "__main__":

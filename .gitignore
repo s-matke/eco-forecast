@@ -205,9 +205,7 @@ pyrightconfig.json
 
 # Ignore data inside ./data/ directory
 data/*/
-raw_data.csv
-train.csv
-test.csv
+data/*.csv
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode
 

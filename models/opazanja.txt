@@ -1,0 +1,29 @@
+surplus, month
+Fitting 2 folds for each of 45 candidates, totalling 90 fits
+0.9717504429419159
+{'metric': 'chebyshev', 'n_jobs': -1, 'n_neighbors': 7, 'p': 2}
+
+surplus, no month
+Fitting 2 folds for each of 45 candidates, totalling 90 fits
+0.9717504429419159
+{'metric': 'chebyshev', 'n_jobs': -1, 'n_neighbors': 7, 'p': 2}
+
+
+no surplus, no month
+Fitting 2 folds for each of 45 candidates, totalling 90 fits
+0.9641890824588488
+{'metric': 'chebyshev', 'n_jobs': -1, 'n_neighbors': 9, 'p': 2}
+
+
+downsampled data, no surplus, no month:
+Fitting 2 folds for each of 45 candidates, totalling 90 fits
+0.929836465395954
+{'metric': 'manhattan', 'n_jobs': -1, 'n_neighbors': 1, 'p': 2}
+
+downsampled data, surplus, no month:
+Fitting 2 folds for each of 45 candidates, totalling 90 fits
+0.942295057154553
+{'metric': 'euclidean', 'n_jobs': -1, 'n_neighbors': 1, 'p': 2}
+
+
+

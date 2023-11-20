@@ -5,6 +5,18 @@ import pandas as pd
 from datetime import datetime, timedelta
 import os
 
+region_code_dict = {
+    "SP": 0,
+    "UK": 1,
+    "DE": 2,
+    "DK": 3,
+    "SE": 4,
+    "HU": 5,
+    "IT": 6,
+    "PO": 7,
+    "NE": 8
+}
+
 def xml_to_gen_data(xml_data) -> dict:
     """
     Parse the XML data of generation into a dictionary of DataFrames, one for each PsrType.
