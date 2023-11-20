@@ -11,18 +11,11 @@ def load_data(file_path):
 
     df = pd.read_csv(file_path)
 
-    print(df.head(2))
-    print(df.columns)
-    print(df.shape)
-    print("-" * 10)
-
     df.drop('StartTime', axis=1, inplace=True)
     
     test_set = df.tail(int(0.2 * df.shape[0]))
     test_set.to_csv('data/test_data.csv', index=False)
     df.drop(test_set.index, inplace=True)
-
-    print(df.shape)
     
     return df
 
@@ -40,6 +33,8 @@ def split_data(df):
 def train_model(X_train, y_train):
     # TODO: Initialize your model and train it
     print("Training the model...")
+
+    # Parameters which we went for, as they gave the best results using GridCV method of finding most optimal parameters for our model
     params = {
         'activation': 'relu', 
         'batch_size': 80, 
@@ -56,6 +51,7 @@ def train_model(X_train, y_train):
         'verbose': False
     }
 
+    # Training the model
     model = MLPClassifier(**params).fit(X_train, y_train)
     
     return model

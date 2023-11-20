@@ -9,7 +9,6 @@ RESAMPLE = False
 OUTLIERS = False
 
 def load_data(file_path):
-    # TODO: Load data from CSV file
     df = pd.read_csv(file_path)
     return df
 
@@ -55,6 +54,7 @@ def clean_data(df):
     return df
 
 def preprocess_data(df):
+    print("Preprocessing the data...")
     # TODO: Generate new features, transform existing features, resampling, etc.
     
     if 'Unnamed: 0' in list(df.columns):
@@ -74,7 +74,8 @@ def preprocess_data(df):
     #     df.drop(f'surplus_{region_code}', axis=1, inplace=True)
 
     # Not the greatest way of resampling our data, but will do the job for now
-    # Losing a lot of information by resampling, so I've set it as an optional feature for the sake of testing
+    # Losing a lot of information by resampling as there's a single region which is dominating over the others
+    # in generated green energy, so I've set it as an optional feature for the sake of testing the model later on
     if RESAMPLE:
         label_counts = dict(df['label'].value_counts())
         highest_count_label = max(label_counts, key=label_counts.get)
@@ -91,14 +92,14 @@ def preprocess_data(df):
         df = pd.concat([df, df_temp])
 
         # Upsampling the label that occurs the least
-        df_temp = df.loc[df['label'] == lowest_count_label, :]
-        df.drop(df.loc[df['label'] == lowest_count_label, :].index, inplace=True)
+        # df_temp = df.loc[df['label'] == lowest_count_label, :]
+        # df.drop(df.loc[df['label'] == lowest_count_label, :].index, inplace=True)
 
-        new_lowest_label_count = min(df['label'].value_counts())
+        # new_lowest_label_count = min(df['label'].value_counts())
 
-        df_temp = resample(df_temp, replace=True, n_samples=new_lowest_label_count, random_state=42)
+        # df_temp = resample(df_temp, replace=True, n_samples=new_lowest_label_count, random_state=42)
 
-        df = pd.concat([df, df_temp])
+        # df = pd.concat([df, df_temp])
             
     return df    
 

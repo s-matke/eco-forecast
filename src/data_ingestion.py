@@ -131,11 +131,13 @@ def fill_missing_hours(df, start_time, end_time, frequency, df_type):
 def transform_dataframe(start_time, end_time, file_path):
     df = pd.read_csv(file_path)
 
+    # TODO: Different approach to dealing with dataframes which have UnitName that isn't 'MAW'
     if df.loc[df['UnitName'] != 'MAW'].shape[0] > 0:
         print("UNIT ISN'T MAW!")
         print(df['UnitName'].unique())
         raise Exception("ERROR: UNITNAME NOT 'MAW'")
 
+    # Removing duplicates if there's any and dropping features that we won't need
     df.drop_duplicates('StartTime', keep='first', inplace=True)
     df.drop(['EndTime', 'AreaID', 'UnitName'], axis=1, inplace=True)
 
@@ -143,16 +145,22 @@ def transform_dataframe(start_time, end_time, file_path):
     df['StartTime'] = df['StartTime'].apply(lambda x: datetime.datetime.strptime(x[:-1], "%Y-%m-%dT%H:%M%z"))
     df['StartTime'] = pd.to_datetime(df['StartTime'].apply(lambda x: x.strftime('%Y-%m-%d %H:%M')))
 
-    # True if data is recorded in 15-minute marks
+    # True if data is recorded in intervals shorter than 1-hour
     short_interval = False
 
+    # Calculating all the intervals in dataframe
     time_diff = df['StartTime'].diff()
     unique_diffs = time_diff.unique()
 
+    # Transforming the intervals into 'minutes' format
     extracted_diffs_minutes = [diff.total_seconds() / 60 for diff in unique_diffs]
+
+    # Saving all the intervals that are valid
     filtered_list = [value for value in extracted_diffs_minutes if not np.isnan(value) and value > 0.0]
+    
     count_req = 0
 
+    # Checking if there's any interval shorter than 1-hour
     if min(filtered_list) < 60.0:
         count_req = np.floor(60.0 / min(filtered_list))
         short_interval = True
@@ -185,9 +193,11 @@ def transform_dataframe(start_time, end_time, file_path):
     df['month'] = df['StartTime'].apply(lambda x: x.month)
     df['year'] = df['StartTime'].apply(lambda x: x.year)
 
+    # if the interval is shorter than 1-hour we have to transform the data so all the intervals are recorded as 1-hour
     if short_interval:
         hourly_counts = df.groupby(['year', 'month', 'day', 'hour']).size()
 
+        # TODO: Might be extra line that served its purpose before (check and remove if neccessary)
         missing_hours = hourly_counts[hourly_counts != count_req].index
 
         df = df[~df[['year', 'month', 'day', 'hour']].apply(tuple, axis=1).isin(missing_hours)]
@@ -201,6 +211,7 @@ def transform_dataframe(start_time, end_time, file_path):
 
 def merge_green_energy_dataframes(dataframes, region_code):
 
+    # Merge 2 dataframes into a single one and sum up their quantity values
     def custom_merge(df_left, df_right):
         merged_df = pd.merge(df_left, df_right, on=['StartTime'], how='outer', suffixes=('', '_other'))
         # Sum up the 'quantity' values from both dataframes
@@ -209,6 +220,7 @@ def merge_green_energy_dataframes(dataframes, region_code):
         merged_df = merged_df.drop('quantity_other', axis=1)
         return merged_df
 
+    # merging all the dataframes saved in list dataframes into a single dataframe
     df_merged = reduce(custom_merge, dataframes)
 
     df_merged.rename(columns={'quantity': f'green_energy_{region_code}'}, inplace=True)
@@ -217,14 +229,19 @@ def merge_green_energy_dataframes(dataframes, region_code):
 
 def save_raw_data(merges, output_path):
     print("Saving the data into raw_data.csv...")
+
+    # Merging all the dataframes of each region into a single dataframe we'll use in pre-processing
     raw_data = reduce(lambda left, right: pd.merge(left, right, on=['StartTime'], how='outer'), merges)
     raw_data.to_csv(f'{output_path}/raw_data.csv', index=False)
 
 def load_merge_save_raw_dataframes(start_time, end_time, data_dir_path):
     print("Loading and merging all the data...")
+    
+    # List used to save all the dataframes of gen_ files (for all regions) in order to merge them all into a single dataframe afterwards
     merges = []
     df_merged = None
 
+    # All the subdirectories within /data/ directory
     region_sub_dirs = [name for name in os.listdir(data_dir_path) if os.path.isdir(os.path.join(data_dir_path, name))]
 
     for region_dir in region_sub_dirs:
@@ -232,6 +249,7 @@ def load_merge_save_raw_dataframes(start_time, end_time, data_dir_path):
         region_dir_path = f'{data_dir_path}/{region_dir}/'
         region_files = os.listdir(region_dir_path)
 
+        # all the dataframes of one region loaded from gen_ files
         green_energy_dfs = []
         df_load = None
 
@@ -239,6 +257,7 @@ def load_merge_save_raw_dataframes(start_time, end_time, data_dir_path):
             split_file_name = file_name.split('_')
             file_path = f'{region_dir_path}/{file_name}'
 
+            # Might be old code, TODO: remove if unneccessary
             if 'merged' in split_file_name:
                 continue
             
@@ -248,11 +267,14 @@ def load_merge_save_raw_dataframes(start_time, end_time, data_dir_path):
             else:
                 psr_type = split_file_name[2].split('.')[0]
 
+                # Checking if the psr type of the gen_ file isn't green energy
                 if not psr_type in list(green_energy_sources.keys()):
                     continue
 
                 df = transform_dataframe(start_time, end_time, file_path)
 
+                # In case the values of quantity for the entire dataframe are 0, we skip over merging those
+                # into the final dataframe as they offer us with no valuable information that'll affect the final dataframe
                 if df is not None:
                     green_energy_dfs.append(df)
         
@@ -313,10 +335,10 @@ def main(start_time, end_time, output_path):
     end_time = end_time.strftime('%Y%m%d%H%M')
 
     # Get Load data from ENTSO-E
-    # get_load_data_from_entsoe(regions, start_time, end_time, output_path)
+    get_load_data_from_entsoe(regions, start_time, end_time, output_path)
 
     # Get Generation data from ENTSO-E
-    # get_gen_data_from_entsoe(regions, start_time, end_time, output_path)
+    get_gen_data_from_entsoe(regions, start_time, end_time, output_path)
 
     # Combine Generation data and Load data into single dataframe and save as .csv
     load_merge_save_raw_dataframes(start_time, end_time, output_path)
